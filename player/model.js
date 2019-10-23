@@ -14,7 +14,7 @@ const Player = db.define("player", {
 // (otherwise we cannot change a table)
 // - Make sure to not have circular dependencies
 // (not like this:) Team imports Player, Player import Team
-Player.belongsTo(Team) // get the Team for this player
+Player.belongsTo(Team, { onDelete: 'CASCADE' }) // get the Team for this player
 Team.hasMany(Player) // get me the Players of this team
 
 module.exports = Player;
