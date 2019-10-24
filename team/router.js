@@ -2,6 +2,7 @@ const { Router } = require("express");
 const Team = require("./model");
 const Player = require("../player/model");
 const authMiddleWare = require("../auth/middleware");
+const { io } = require('../index');
 
 const router = new Router();
 
@@ -22,7 +23,7 @@ router.get("/teams/:teamId", (req, res, next) => {
 });
 
 // Create a new team account
-router.post("/teams", authMiddleWare, (req, res, next) => {
+router.post("/teams", authMiddleWare, async (req, res, next) => {
   console.log("Do we have the user of this request?", req.user);
   // since this was an authenticated route, we now have req.user
   // it contains all info about this user (actually req.user is a Sequelize User instance)
@@ -31,9 +32,19 @@ router.post("/teams", authMiddleWare, (req, res, next) => {
   // req.user.update()
 
   // const userId = req.body.userId // NO!
-  Team.create(req.body)
-    .then(team => res.json(team))
-    .catch(next);
+  try {
+    const team = await Team.create(req.body)
+    io.emit("action", {
+      type: "TEAM_CREATE_SUCCESS",
+      payload: team
+    });
+
+    res.json(team)
+
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.delete("/teams/:teamId", (req, res, next) => {

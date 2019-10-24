@@ -10,7 +10,7 @@ function toData(token) {
   return jwt.verify(token, secret)
 }
 
-module.exports = { toJWT, toData }
+module.exports = { toJWT, toData, secret }
 
 // let token = toJWT({ userId: 9001 })
 // console.log(token)

@@ -1,4 +1,10 @@
 const express = require("express");
+const http = require("http");
+const socketIO = require("socket.io");
+
+// Socket Auth
+const socketIoJwtAuth = require("socketio-jwt-auth");
+const { secret } = require("./auth/jwt");
 
 // middlewares
 const bodyParser = require("body-parser");
@@ -21,7 +27,13 @@ const db = require("./db");
 
 // Init
 const app = express();
+const server = http.Server(app);
+const io = socketIO(server);
 const port = process.env.PORT || 4000;
+
+server.listen(port, () => {
+  console.log(`App is listening on port ${port}`);
+});
 
 // If req.body is undefined
 // - use bodyparser
@@ -43,9 +55,6 @@ app
   .use(authRouter)
   .use(playerRouter)
   .use(teamRouter)
-  .listen(port, () => {
-    console.log(`App is listening on port ${port}`);
-  });
 
 db.sync({ force: true })
   .then(() => {
@@ -84,13 +93,21 @@ db.sync({ force: true })
   })
   .catch(console.error);
 
-/* 
+io.use(
+  socketIoJwtAuth.authenticate({ secret }, async (payload, done) => {
+    const user = await User.findByPk(payload.id);
+    if (user) done(null, user);
+    else done(null, false, `Invalid JWT user ID`);
+  })
+);
 
-TODO
+io.on("connect", socket => {
+  const email = socket.request.user.email;
+  console.log(`User ${email} just connected`);
 
-- player Model
-- router -> Player router
-- Define the relationships
-- router -> add routes to team router so you can get the players of a team?
+  socket.on("disconnect", () => {
+    console.log(`User ${email} just disconnected`);
+  });
+});
 
-*/
+module.exports.io = io;
