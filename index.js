@@ -1,4 +1,6 @@
 const express = require("express");
+const http = require("http");
+const socketIO = require("socket.io");
 
 // middlewares
 const bodyParser = require("body-parser");
@@ -21,7 +23,13 @@ const db = require("./db");
 
 // Init
 const app = express();
+const server = http.Server(app);
+const io = socketIO(server);
 const port = process.env.PORT || 4000;
+
+server.listen(port, () => {
+  console.log(`App is listening on port ${port}`);
+});
 
 // If req.body is undefined
 // - use bodyparser
@@ -43,9 +51,6 @@ app
   .use(authRouter)
   .use(playerRouter)
   .use(teamRouter)
-  .listen(port, () => {
-    console.log(`App is listening on port ${port}`);
-  });
 
 db.sync({ force: true })
   .then(() => {
