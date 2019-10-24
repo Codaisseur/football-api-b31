@@ -2,6 +2,10 @@ const express = require("express");
 const http = require("http");
 const socketIO = require("socket.io");
 
+// Socket Auth
+const socketIoJwtAuth = require("socketio-jwt-auth");
+const { secret } = require("./auth/jwt");
+
 // middlewares
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -89,13 +93,19 @@ db.sync({ force: true })
   })
   .catch(console.error);
 
-/* 
+io.use(
+  socketIoJwtAuth.authenticate({ secret }, async (payload, done) => {
+    const user = await User.findByPk(payload.id);
+    if (user) done(null, user);
+    else done(null, false, `Invalid JWT user ID`);
+  })
+);
 
-TODO
+io.on("connect", socket => {
+  const email = socket.request.user.email;
+  console.log(`User ${email} just connected`);
 
-- player Model
-- router -> Player router
-- Define the relationships
-- router -> add routes to team router so you can get the players of a team?
-
-*/
+  socket.on("disconnect", () => {
+    console.log(`User ${email} just disconnected`);
+  });
+});
