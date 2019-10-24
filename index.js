@@ -109,3 +109,5 @@ io.on("connect", socket => {
     console.log(`User ${email} just disconnected`);
   });
 });
+
+module.exports.io = io;
